@@ -8,7 +8,6 @@ use Pimple\ServiceProviderInterface;
 use Silex\ControllerCollection;
 use Symfony\Component\Cache\Adapter\AbstractAdapter;
 use Symfony\Component\Config\FileLocator;
-use Symfony\Component\Routing\Annotation\Route;
 
 class RouteAnnotationsProvider implements ServiceProviderInterface
 {
@@ -35,7 +34,7 @@ class RouteAnnotationsProvider implements ServiceProviderInterface
                 $annotationDataCacheItem = $cacheAdapter->getItem(static::ANNOTATION_DATA_CACHE_ITEM_KEY);
 
                 if ($annotationDataCacheItem->isHit()) {
-                    $this->addRoutes($controllerCollection, $annotationDataCacheItem->get());
+                    $this->addRoutes($container, $controllerCollection, $annotationDataCacheItem->get());
                     return $controllerCollection;
                 }
             }
@@ -50,26 +49,25 @@ class RouteAnnotationsProvider implements ServiceProviderInterface
                 $annotationDataCacheItem->set($annotationClassDataCollection);
                 $cacheAdapter->save($annotationDataCacheItem);
             }
-            $this->addRoutes($controllerCollection, $annotationClassDataCollection);
+            $this->addRoutes($container, $controllerCollection, $annotationClassDataCollection);
 
             return $controllerCollection;
         });
     }
 
-    protected function addRoutes(ControllerCollection $controllerCollection, array $annotationClassDataCollection)
+    protected function addRoutes(Container $container, ControllerCollection $controllerCollection, array $annotationClassDataCollection)
     {
         /** @var AnnotationClassData[] $annotationClassDataCollection */
         foreach ($annotationClassDataCollection as $classAnnotationData) {
             foreach ($classAnnotationData->getAnnotationMethodDataCollection() as $methodAnnotationData) {
-                $this->addRoute($controllerCollection, $methodAnnotationData->getAnnotation(), $classAnnotationData->getClass(), $methodAnnotationData->getMethod());
+                $this->addRoute($container, $controllerCollection, $methodAnnotationData->getAnnotation(), $classAnnotationData->getClass(), $methodAnnotationData->getMethod());
             }
         }
     }
 
-    protected function addRoute(ControllerCollection $controllerCollection, Route $annotation, \ReflectionClass $class, \ReflectionMethod $method)
+    protected function addRoute(Container $container, ControllerCollection $controllerCollection, Route $annotation, \ReflectionClass $class, \ReflectionMethod $method)
     {
-        $controller = $class->getName(). '::' . $method->getName();
-
+        $controller = $this->resolveController($container, $annotation, $class, $method);
         $route = $controllerCollection->match($annotation->getPath(), $controller)->bind($annotation->getName());
 
         /** @var \Silex\Route $route */
@@ -80,5 +78,27 @@ class RouteAnnotationsProvider implements ServiceProviderInterface
             ->setSchemes($annotation->getSchemes())
             ->setMethods($annotation->getMethods())
             ->setCondition($annotation->getCondition());
+    }
+
+    protected function resolveController(Container $container, Route $annotation, \ReflectionClass $class, \ReflectionMethod $method): string
+    {
+        if ($serviceName = $annotation->getService()) {
+            if (!isset($container[$serviceName])) {
+                throw new \RuntimeException(sprintf('No service "%s" found in the service container', $serviceName));
+            }
+            return $serviceName;
+        } elseif ($serviceName = $this->guessService($class)) {
+            if (isset($container[$serviceName])) {
+                return $serviceName;
+            }
+        }
+        return $class->getName(). '::' . $method->getName();
+    }
+
+    protected function guessService(\ReflectionClass $class): string
+    {
+        $className = str_replace('\\', '.', $class->getName());
+
+        return strtolower(preg_replace('~(?<=\\w)([A-Z])~', '_$1', $className));
     }
 }

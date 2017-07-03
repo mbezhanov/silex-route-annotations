@@ -2,7 +2,7 @@
 
 namespace Bezhanov\Silex\Routing\Tests\Fixtures\AnnotatedClasses;
 
-use Symfony\Component\Routing\Annotation\Route;
+use Bezhanov\Silex\Routing\Route;
 
 class BarController extends AbstractController
 {

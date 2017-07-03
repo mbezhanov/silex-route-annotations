@@ -1,6 +1,6 @@
 <?php
 
-namespace Bezhanov\Silex\Routing\Tests\Fixtures\IncorrectAnnotations;
+namespace Bezhanov\Silex\Routing\Tests\Fixtures\AnnotatedServiceControllers;
 
 use Bezhanov\Silex\Routing\Route;
 
@@ -9,7 +9,8 @@ class BarController
     /**
      * @Route("/bar")
      */
-    public function bar()
+    public function barAction()
     {
+
     }
 }

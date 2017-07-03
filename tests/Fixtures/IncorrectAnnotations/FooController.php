@@ -2,7 +2,7 @@
 
 namespace Bezhanov\Silex\Routing\Tests\Fixtures\IncorrectAnnotations;
 
-use Symfony\Component\Routing\Annotation\Route;
+use Bezhanov\Silex\Routing\Route;
 
 class FooController
 {

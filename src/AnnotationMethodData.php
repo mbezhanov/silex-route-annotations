@@ -2,8 +2,6 @@
 
 namespace Bezhanov\Silex\Routing;
 
-use Symfony\Component\Routing\Annotation\Route;
-
 class AnnotationMethodData
 {
     private $method;

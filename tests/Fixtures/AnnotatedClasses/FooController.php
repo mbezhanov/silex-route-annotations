@@ -2,7 +2,7 @@
 
 namespace Bezhanov\Silex\Routing\Tests\Fixtures\AnnotatedClasses;
 
-use Symfony\Component\Routing\Annotation\Route;
+use Bezhanov\Silex\Routing\Route;
 
 /**
  * @Route("/foo", host="m.example.com", condition="request.headers.get('User-Agent') matches '/firefox/i'")

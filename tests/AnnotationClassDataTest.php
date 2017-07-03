@@ -4,8 +4,8 @@ namespace Bezhanov\Silex\Routing\Tests;
 
 use Bezhanov\Silex\Routing\AnnotationClassData;
 use Bezhanov\Silex\Routing\AnnotationMethodData;
+use Bezhanov\Silex\Routing\Route;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Routing\Annotation\Route;
 
 class AnnotationClassDataTest extends TestCase
 {

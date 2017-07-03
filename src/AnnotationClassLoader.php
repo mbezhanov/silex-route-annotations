@@ -3,7 +3,6 @@
 namespace Bezhanov\Silex\Routing;
 
 use Doctrine\Common\Annotations\Reader;
-use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * AnnotationClassLoader loads routing information from a PHP class and its methods.
@@ -92,6 +91,10 @@ class AnnotationClassLoader
         $annotation->setMethods($methods);
         $annotation->setCondition($condition);
 
+        if (!empty($globals['service'])) {
+            $annotation->setService($globals['service']);
+        }
+
         return $annotation;
     }
 
@@ -122,6 +125,7 @@ class AnnotationClassLoader
             'methods' => [],
             'host' => '',
             'condition' => '',
+            'service' => '',
         ];
 
         if ($annot = $this->reader->getClassAnnotation($class, $this->routeAnnotationClass)) {
@@ -155,6 +159,10 @@ class AnnotationClassLoader
 
             if (null !== $annot->getCondition()) {
                 $globals['condition'] = $annot->getCondition();
+            }
+
+            if (null !== $annot->getService()) {
+                $globals['service'] = $annot->getService();
             }
         }
 

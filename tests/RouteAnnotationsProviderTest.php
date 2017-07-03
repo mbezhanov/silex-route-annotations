@@ -3,6 +3,8 @@
 namespace Bezhanov\Silex\Routing\Tests;
 
 use Bezhanov\Silex\Routing\RouteAnnotationsProvider;
+use Bezhanov\Silex\Routing\Tests\Fixtures\AnnotatedServiceControllers\BarController;
+use Bezhanov\Silex\Routing\Tests\Fixtures\AnnotatedServiceControllers\FooController;
 use Bezhanov\Silex\Routing\Tests\Fixtures\IncorrectCacheImplementation;
 use Doctrine\Common\Annotations\AnnotationRegistry;
 use PHPUnit\Framework\TestCase;
@@ -15,6 +17,7 @@ class RouteAnnotationsProviderTest extends TestCase
 {
     private const EMPTY_CONTROLLER_DIRECTORY = __DIR__ . '/Fixtures/EmptyFolder';
     private const NOT_EMPTY_CONTROLLER_DIRECTORY = __DIR__ . '/Fixtures/AnnotatedClasses';
+    private const SERVICE_CONTROLLER_DIRECTORY = __DIR__ . '/Fixtures/AnnotatedServiceControllers';
 
     public function testRegister()
     {
@@ -63,13 +66,46 @@ class RouteAnnotationsProviderTest extends TestCase
         $this->runApplication(self::EMPTY_CONTROLLER_DIRECTORY, $cacheAdapter->reveal());
     }
 
-    private function runApplication(string $controllerPath = null, $cacheAdapter = null)
+    public function testRegisterWithMissingServices()
     {
+        $this->expectException(\RuntimeException::class);
+        $this->runApplication(self::SERVICE_CONTROLLER_DIRECTORY);
+    }
+
+    public function testRegisterWithNoMissingServices()
+    {
+        $loader = require __DIR__ . '/../vendor/autoload.php';
+        AnnotationRegistry::registerLoader([$loader, 'loadClass']);
+
         $app = new Application();
         $app->register(new RouteAnnotationsProvider(), [
-            'routing.controller_dir' => $controllerPath,
-            'routing.cache_adapter' => $cacheAdapter,
+            'routing.controller_dir' => self::SERVICE_CONTROLLER_DIRECTORY,
         ]);
+        $app['bezhanov.silex.routing.tests.fixtures.annotated_service_controllers.bar_controller'] = function() {
+            return new BarController();
+        };
+        $app['foo.bar_baz'] = function() {
+            return new FooController();
+        };
+        $app->boot();
+        $routes = $app['controllers']->flush();
+        $this->assertCount(2, $routes);
+    }
+
+    private function runApplication(string $controllerPath = null, $cacheAdapter = null)
+    {
+        $values = [];
+
+        if (!is_null($controllerPath)) {
+            $values['routing.controller_dir'] = $controllerPath;
+        }
+
+        if (!is_null($cacheAdapter)) {
+            $values['routing.cache_adapter'] = $cacheAdapter;
+        }
+
+        $app = new Application();
+        $app->register(new RouteAnnotationsProvider(), $values);
         $app->handle(Request::createFromGlobals());
     }
 }
