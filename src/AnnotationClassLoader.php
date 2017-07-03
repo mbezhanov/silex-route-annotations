@@ -43,9 +43,9 @@ class AnnotationClassLoader
                 if (!preg_match('#Action$#', $method->getName())) {
                     throw new \RuntimeException(sprintf('Method "%s" from class "%s" should have a name ending in "Action"', $method->getName(), $class->getName()));
                 }
+                /* @var Route $annotation */
+                $annotationMethodDataCollection[] = new AnnotationMethodData($method, $this->configureAnnotation($annotation, $globals, $class, $method));
             }
-            /* @var Route $annotation */
-            $annotationMethodDataCollection[] = new AnnotationMethodData($method, $this->configureAnnotation($annotation, $globals, $class, $method));
         }
 
         return new AnnotationClassData($class, $annotationMethodDataCollection);

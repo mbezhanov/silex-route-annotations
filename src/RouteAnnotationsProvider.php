@@ -86,13 +86,13 @@ class RouteAnnotationsProvider implements ServiceProviderInterface
             if (!isset($container[$serviceName])) {
                 throw new \RuntimeException(sprintf('No service "%s" found in the service container', $serviceName));
             }
-            return $serviceName;
+            return $serviceName . ':' . $method->getName();
         } elseif ($serviceName = $this->guessService($class)) {
             if (isset($container[$serviceName])) {
-                return $serviceName;
+                return $serviceName . ':' . $method->getName();
             }
         }
-        return $class->getName(). '::' . $method->getName();
+        return $class->getName() . '::' . $method->getName();
     }
 
     protected function guessService(\ReflectionClass $class): string
